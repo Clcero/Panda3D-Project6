@@ -86,7 +86,7 @@ class Spaceship(SphereCollideObject): # Player
             tag = 'Missile' + str(Missile.missileCount)
             
             posVec = self.modelNode.getPos() + inFront
-            currentMissile = Missile(self.base.loader, './Assets/Phaser/phaser.egg', self.base.render, tag, posVec, 3.0) # Instantiate
+            currentMissile = Missile(self.base.loader, './Assets/Phaser/phaser.egg', self.base.render, tag, posVec, 2.0) # Instantiate
 
             # Duration (2.0), Path to take (travVec), Starting position (posVec), Check collisions between frames (Fluid)
             Missile.Intervals[tag] = currentMissile.modelNode.posInterval(2.0, travVec, startPos = posVec, fluid = 1) # fluid = 1 checks in-between intervals
@@ -108,25 +108,24 @@ class Spaceship(SphereCollideObject): # Player
             for i in range(self.missileBay):
                 travRate = self.missileDistance
 
-                aim = self.base.render.getRelativeVector(self.modelNode, Vec3.forward())
+                aim = self.base.render.getRelativeVector(self.modelNode, Vec3(0, 1, 0))
                 aim.normalize()
+                random_offset = Vec3(random.uniform(-22, 22), random.uniform(-5, 5), random.uniform(-22, 22))
 
-                fireSolution = aim * travRate
-                random_offset = Vec3(random.uniform(-12, 12), random.uniform(-5, 5), random.uniform(-12, 12))
                 inFront = aim * 150 + random_offset # Offset to put at front of spaceship
+                posVec = self.modelNode.getPos() + inFront
 
-                travVec = fireSolution + self.modelNode.getPos() # Adjust to always follow model node and in front of player
+                travVec = aim * self.missileDistance
+
                 self.missileBay -= 1
                 tag = 'Missile' + str(Missile.missileCount)
-                
-                posVec = self.modelNode.getPos() + inFront * (i + 1)
-                currentMissile = Missile(self.base.loader, './Assets/Phaser/phaser.egg', self.base.render, tag, posVec, 3.0) # Instantiate
+                currentMissile = Missile(self.base.loader, './Assets/Phaser/phaser.egg', self.base.render, tag, posVec, 2.0) # Instantiate
 
                 # Duration (2.0), Path to take (travVec), Starting position (posVec), Check collisions between frames (Fluid)
-                Missile.Intervals[tag] = currentMissile.modelNode.posInterval(2.0, travVec, startPos = posVec, fluid = 1) # fluid = 1 checks in-between intervals
+                endPos = posVec + travVec
+                Missile.Intervals[tag] = currentMissile.modelNode.posInterval(2.0, endPos, startPos = posVec, fluid = 1) # fluid = 1 checks in-between intervals
                 
                 Missile.Intervals[tag].start()
-
                 self.traverser.addCollider(currentMissile.collisionNode, self.handler)
             
         else:
@@ -201,7 +200,7 @@ class Spaceship(SphereCollideObject): # Player
         nodeID = self.base.render.find(hitID)
         try:
             nodeID.detachNode()
-        except AssertionError:
+        except AssertionError: # This is required to keep the program from crashing, but doesn't fix the problem.
             print('Drone not found.')
         self.explodeNode.setPos(hitPosition)
         self.Explode(hitPosition)
