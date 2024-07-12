@@ -86,13 +86,13 @@ class MyApp(ShowBase):
                 return new_position
 
     def _generate_drones(self):
-        '''Spawn Drones on planets 1, 2, and 3'''
+        '''Spawn Drones on planets 1, 2, and 3.'''
         fullCycle = 60
         for j in range(fullCycle):
             spaceJamClasses.Drone.droneCount += 1
             nickName = "Drone" + str(spaceJamClasses.Drone.droneCount)
 
-            # TODO Spawn on random planets
+            # Changed name of each drone so find() method could differentiate.
             self.DrawCloudDefense(self.Planet1, nickName + '-Cloud')
             self.DrawBaseballSeams(self.Planet2, nickName + '-Baseball', j, fullCycle, 2)
             self.DrawCircleX(self.Planet3, nickName + '-X', j)

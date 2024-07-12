@@ -84,7 +84,7 @@ class Spaceship(SphereCollideObject): # Player
             tag = 'Missile' + str(Missile.missileCount)
             
             posVec = self.modelNode.getPos() + inFront
-            currentMissile = Missile(self.base.loader, './Assets/Phaser/phaser.egg', self.base.render, tag, posVec, 4.0) # Instantiate
+            currentMissile = Missile(self.base.loader, './Assets/Phaser/phaser.egg', self.base.render, tag, posVec, 3.0) # Instantiate
 
             # Duration (2.0), Path to take (travVec), Starting position (posVec), Check collisions between frames (Fluid)
             Missile.Intervals[tag] = currentMissile.modelNode.posInterval(2.0, travVec, startPos = posVec, fluid = 1) # fluid = 1 checks in-between intervals
@@ -143,7 +143,6 @@ class Spaceship(SphereCollideObject): # Player
         tempVar = intoNode.split('-')
         tempVar = intoNode.split('_')
         victim = tempVar[0]
-        print(f'bad victim is {victim}')
 
         pattern = r'[0-9]'
         strippedString = re.sub(pattern, '', victim) # Arguments are characters we don't want, what we want to replace, string to edit.
@@ -156,11 +155,13 @@ class Spaceship(SphereCollideObject): # Player
             self.DroneDestroy(victim, intoPosition)
         
         else:
-            Missile.Intervals[shooter].finish()
+            try:
+                Missile.Intervals[shooter].finish()
+            except KeyError:
+                print('Faulty missile!')
     
     def DroneDestroy(self, hitID, hitPosition):
         nodeID = self.base.render.find(hitID)
-        print('target: ', nodeID, 'destroyed')
         nodeID.detachNode()
 
         self.explodeNode.setPos(hitPosition)
@@ -170,7 +171,7 @@ class Spaceship(SphereCollideObject): # Player
         self.cntExplode += 1
         tag = 'particles-' + str(self.cntExplode)
 
-        self.explodeIntervals[tag] = LerpFunc(self.ExplodeLight, fromData = 0, toData = 1, duration = 4.0, extraArgs = [impactPoint])
+        self.explodeIntervals[tag] = LerpFunc(self.ExplodeLight, fromData = 0, toData = 1, duration = 2.0, extraArgs = [impactPoint])
         self.explodeIntervals[tag].start()
     
     def ExplodeLight(self, t, explosionPosition):
