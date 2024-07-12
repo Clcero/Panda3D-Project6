@@ -8,6 +8,7 @@ from direct.task import Task
 from SpaceJamClasses import Missile
 from direct.gui.OnscreenImage import OnscreenImage
 import re # For string editing
+import random
 
 class Spaceship(SphereCollideObject): # Player
     def __init__(self, base, loader: Loader, taskMgr: TaskManager, accept: Callable[[str, Callable], None], modelPath: str, parentNode: NodePath, nodeName: str, texPath: str, posVec: Vec3, scaleVec: float):
@@ -49,6 +50,7 @@ class Spaceship(SphereCollideObject): # Player
         self.accept('e', self.rightThrust, [1])
         self.accept('e-up', self.rightThrust, [0])
         self.accept('f', self.Fire) # Fire missile
+        self.accept('shift-f', self.FireBarrage)
     
     def EnableHUD(self):
         '''Sets aiming reticle.'''
@@ -64,9 +66,9 @@ class Spaceship(SphereCollideObject): # Player
     # Missiles
     def _SetMissiles(self):
         '''Defines missile parameters.'''
-        self.reloadTime = 0.25
+        self.reloadTime = 0.35
         self.missileDistance = 4000
-        self.missileBay = 1
+        self.missileBay = 6
 
     def Fire(self):
         '''Shoot missile if loaded, otherwise reload.'''
@@ -98,14 +100,49 @@ class Spaceship(SphereCollideObject): # Player
                 print('Preparing reload...')
                 self.taskMgr.doMethodLater(0, self._Reload, 'reload') # Doing it 0 seconds later
                 return Task.cont
-    
+            
+
+    def FireBarrage(self):
+        '''Shoot missile if loaded, otherwise reload.'''
+        if self.missileBay: # Check if missile in bay
+            for i in range(self.missileBay):
+                travRate = self.missileDistance
+
+                aim = self.base.render.getRelativeVector(self.modelNode, Vec3.forward())
+                aim.normalize()
+
+                fireSolution = aim * travRate
+                random_offset = Vec3(random.uniform(-12, 12), random.uniform(0, 0), random.uniform(-12, 12))
+                inFront = aim * 150 + random_offset # Offset to put at front of spaceship
+
+                travVec = fireSolution + self.modelNode.getPos() # Adjust to always follow model node and in front of player
+                self.missileBay -= 1
+                tag = 'Missile' + str(Missile.missileCount)
+                
+                posVec = self.modelNode.getPos() + inFront * (i + 1)
+                currentMissile = Missile(self.base.loader, './Assets/Phaser/phaser.egg', self.base.render, tag, posVec, 3.0) # Instantiate
+
+                # Duration (2.0), Path to take (travVec), Starting position (posVec), Check collisions between frames (Fluid)
+                Missile.Intervals[tag] = currentMissile.modelNode.posInterval(2.0, travVec, startPos = posVec, fluid = 1) # fluid = 1 checks in-between intervals
+                
+                Missile.Intervals[tag].start()
+
+                self.traverser.addCollider(currentMissile.collisionNode, self.handler)
+            
+        else:
+            if not self.taskMgr.hasTaskNamed('reload'):
+                print('Preparing reload...')
+                self.taskMgr.doMethodLater(0, self._Reload, 'reload') # Doing it 0 seconds later
+                return Task.cont
+
+
     def _Reload(self, task):
         '''Called as part of Fire function, loads missile after reload time has passed.'''
         if task.time > self.reloadTime:
-            self.missileBay += 1
+            self.missileBay += 6
             
-            if self.missileBay > 1:
-                self.missileBay = 1
+            if self.missileBay > 6:
+                self.missileBay = 6
             if self.missileBay < 0:
                 self.missileBay = 0
             print('Reloaded.')
@@ -157,7 +194,7 @@ class Spaceship(SphereCollideObject): # Player
         else:
             try:
                 Missile.Intervals[shooter].finish()
-            except KeyError:
+            except KeyError: # This is required to keep the program from crashing, but doesn't fix the problem.
                 print('Faulty missile!')
     
     def DroneDestroy(self, hitID, hitPosition):
