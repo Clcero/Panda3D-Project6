@@ -112,7 +112,7 @@ class Spaceship(SphereCollideObject): # Player
                 aim.normalize()
 
                 fireSolution = aim * travRate
-                random_offset = Vec3(random.uniform(-12, 12), random.uniform(0, 0), random.uniform(-12, 12))
+                random_offset = Vec3(random.uniform(-12, 12), random.uniform(-5, 5), random.uniform(-12, 12))
                 inFront = aim * 150 + random_offset # Offset to put at front of spaceship
 
                 travVec = fireSolution + self.modelNode.getPos() # Adjust to always follow model node and in front of player
@@ -199,8 +199,10 @@ class Spaceship(SphereCollideObject): # Player
     
     def DroneDestroy(self, hitID, hitPosition):
         nodeID = self.base.render.find(hitID)
-        nodeID.detachNode()
-
+        try:
+            nodeID.detachNode()
+        except AssertionError:
+            print('Drone not found.')
         self.explodeNode.setPos(hitPosition)
         self.Explode(hitPosition)
     

@@ -133,7 +133,8 @@ class MyApp(ShowBase):
         # TODO make 3rd person camera? 
         self.disableMouse()
         self.camera.reparentTo(self.Hero.modelNode)
-        self.camera.setFluidPos(0, 0.1, 0) # Slight adjustment to avoid model clipping
+        self.camera.setFluidPos(0, -50, 6) # Slight adjustment to avoid model clipping
+
         
     # Prepare message if server wants to quit.
     def quit(self):
