@@ -47,6 +47,7 @@ class MyApp(ShowBase):
 
     
     def SetPlayerCollisions(self):
+        '''Add player colliders and collisions.'''
         self.pusher.addCollider(self.Hero.collisionNode, self.Hero.modelNode)
         self.cTrav.addCollider(self.Hero.collisionNode, self.pusher)
         self.cTrav.showCollisions(self.render) # Remove after collider labs
@@ -130,7 +131,6 @@ class MyApp(ShowBase):
         spaceJamClasses.Drone(self.loader, "./Assets/DroneDefender/DroneDefender.obj", self.render, droneName, "./Assets/DroneDefender/octotoad1_auv.png", position, 5)
 
     def SetCamera(self):
-        # TODO make 3rd person camera? 
         self.disableMouse()
         self.camera.reparentTo(self.Hero.modelNode)
         self.camera.setFluidPos(0, -50, 6) # Behind and slightly above model

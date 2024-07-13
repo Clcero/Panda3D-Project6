@@ -34,7 +34,8 @@ class Spaceship(SphereCollideObject): # Player
 
     # All key bindings for ship's movement.
     def SetKeyBindings(self):
-        '''Space moves forwards, WASD are turning controls, Q&E move left and right.'''
+        '''Space moves forwards, WASD are turning controls, Q&E move left and right.
+           F shoots a single missile, and Shift+F shoot a barrage.'''
         self.accept('space', self.fwdThrust, [1])
         self.accept('space-up', self.fwdThrust, [0])
         self.accept('a', self.LeftTurn, [1])
@@ -50,7 +51,7 @@ class Spaceship(SphereCollideObject): # Player
         self.accept('e', self.rightThrust, [1])
         self.accept('e-up', self.rightThrust, [0])
         self.accept('f', self.Fire) # Fire missile
-        self.accept('shift-f', self.FireBarrage)
+        self.accept('shift-f', self.FireBarrage) # Fire Missile Barrage
     
     def EnableHUD(self):
         '''Sets aiming reticle.'''
@@ -58,6 +59,7 @@ class Spaceship(SphereCollideObject): # Player
         self.Hud.setTransparency(TransparencyAttrib.MAlpha)
     
     def _SetCollisions(self):
+        '''Handles collision setting and debugging.'''
         self.traverser = self.base.cTrav
         self.handler = CollisionHandlerEvent()
         self.handler.addInPattern('into')
@@ -66,7 +68,7 @@ class Spaceship(SphereCollideObject): # Player
     # Missiles
     def _SetMissiles(self):
         '''Defines missile parameters.'''
-        self.reloadTime = 0.35
+        self.reloadTime = 0.45
         self.missileDistance = 4000
         self.missileBay = 6
 
@@ -103,7 +105,7 @@ class Spaceship(SphereCollideObject): # Player
             
 
     def FireBarrage(self):
-        '''Shoot missile if loaded, otherwise reload.'''
+        '''Shoot remaining missiles as a barrage, otherwise reload.'''
         if self.missileBay: # Check if missile in bay
             for i in range(self.missileBay):
                 travRate = self.missileDistance
@@ -167,6 +169,8 @@ class Spaceship(SphereCollideObject): # Player
         return Task.cont
     
     def HandleInto(self, entry):
+        '''Handles debugging for collisions, and parses for missile collision detection with drones.'''
+
         fromNode = entry.getFromNodePath().getName()
         print("fromNode: " + fromNode)
         intoNode = entry.getIntoNodePath().getName()
@@ -180,9 +184,9 @@ class Spaceship(SphereCollideObject): # Player
         tempVar = intoNode.split('_')
         victim = tempVar[0]
 
-        pattern = r'[0-9]'
+        pattern = r'[0-9]' # Remove numbers 0 - 9
         strippedString = re.sub(pattern, '', victim) # Arguments are characters we don't want, what we want to replace, string to edit.
-        strippedString = strippedString.split('-')[0]
+        strippedString = strippedString.split('-')[0] # Remove pattern identifier
 
         if (strippedString == 'Drone'):
             print(shooter + ' is DONE...')
@@ -197,6 +201,8 @@ class Spaceship(SphereCollideObject): # Player
                 print('Faulty missile!')
     
     def DroneDestroy(self, hitID, hitPosition):
+        '''Find a drone with hitID, detach it's node, then cause a particle explosions at it's position.'''
+
         nodeID = self.base.render.find(hitID)
         try:
             nodeID.detachNode()
@@ -206,6 +212,7 @@ class Spaceship(SphereCollideObject): # Player
         self.Explode(hitPosition)
     
     def Explode(self, impactPoint):
+        '''Handles particle generation and LerpFunc execution.'''
         self.cntExplode += 1
         tag = 'particles-' + str(self.cntExplode)
 
@@ -213,6 +220,7 @@ class Spaceship(SphereCollideObject): # Player
         self.explodeIntervals[tag].start()
     
     def ExplodeLight(self, t, explosionPosition):
+        '''Helper function for controlling particle explosion activation parameters.'''
         if t == 1.0 and self.explodeEffect:
             self.explodeEffect.disable()
         
@@ -220,6 +228,7 @@ class Spaceship(SphereCollideObject): # Player
             self.explodeEffect.start(self.explodeNode)
     
     def SetParticles(self):
+        '''Enables and sets particle effect settings.'''
         self.base.enableParticles()
         self.explodeEffect = ParticleEffect()
         self.explodeEffect.loadConfig("./Assets/ParticleEffects/Explosions/basic_xpld_efx.ptf")
